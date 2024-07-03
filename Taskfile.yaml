@@ -1,0 +1,50 @@
+version: '3'
+
+env:
+  CLUSTER_NAME: ${CLUSTER_NAME}
+  STS_NAME: ${STS_NAME}
+  SERVICE: ${SERVICE}
+  PORT: ${PORT}
+  NAMESPACE: ${NAMESPACE}
+
+tasks:
+  create-kind:
+    desc: "Create kind cluster"
+    cmds:
+      - kind create cluster --config kind-config.yaml --name {{.CLUSTER_NAME}}
+  destroy-kind:
+    desc: "Destroy kind cluster"
+    cmds:
+      - kubectl config delete-context kind-{{.CLUSTER_NAME}}
+      - kubectl config delete-cluster kind-{{.CLUSTER_NAME}}
+      - kubectl config unset users.kind-{{.CLUSTER_NAME}}
+      - kind delete clusters {{.CLUSTER_NAME}}
+  apply:
+    desc: "Apply kubernetes manifests"
+    cmds:
+      - kubectl apply -f k8s/
+
+  status-sts:
+    desc: "Get deployment status"
+    cmds:
+      - kubectl get statefulsets
+
+  describe-deployment:
+    desc: "Describe given kubernetes statefulset"
+    cmds:
+      - kubectl describe sts {{.STS_NAME}}
+
+  port-forward:
+    desc: "Port forward specific service"
+    vars:
+      service: "my-service"
+      port: "8080"
+    cmds:
+      - kubectl port-forward service/{{.SERVICE}} {{.PORT}}:80
+      
+  list-pods:
+    desc: "List all pods in namespace"
+    vars:
+      NAMESPACE: "default"
+    cmds:
+      - kubectl get pods -n {{.NAMESPACE}}
